@@ -196,6 +196,7 @@
 (function(){
 /* ============================ constants ============================ */
 const CURRENT_SCHEMA = 1;
+const CONTENT_VERSION = 2;
 const CACHE_KEY = 'wpt:autosave';
 const WK = ['sun','mon','tue','wed','thu','fri','sat'];
 const WK_LABEL = {mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
@@ -248,7 +249,7 @@ const Cache = (()=>{
 
 /* ============================ default data ============================ */
 function defaultRoutine(id,name,source,ex){ return {id,name,source,exercises:ex.map(e=>({
-  id:slug(e[0]), name:e[0], targetSets:e[1], repRange:e[2], notes:e[3]||'', type:e[4]||'compound'
+  id:slug(e[0]), name:e[0], targetSets:e[1], reps:e[2], notes:e[3]||'', type:e[4]||'compound'
 }))}; }
 
 function seedDB(){
@@ -264,6 +265,7 @@ function seedDB(){
       vacationDate:vac,
       goalType:'recomp',
       weekendsRest:true,
+      contentVersion: CONTENT_VERSION,
       targets:{ calories:0, protein_g:0, carbs_g:0, fat_g:0, autoCalc:true },
       weeklyTargets:{ liftDays:4, cardioSessions:2, cardioMinutes:110 },
       bodyWeight:{ start_lb:0, current_lb:0, target_lb:0 },
@@ -273,36 +275,54 @@ function seedDB(){
     split:{
       mon:{type:'lift', routineIds:['perfect-chest','perfect-triceps']},
       tue:{type:'lift', routineIds:['perfect-back','perfect-biceps'], run:true},
-      wed:{type:'lift', routineIds:['perfect-shoulders','perfect-abs']},
-      thu:{type:'lift', routineIds:['perfect-legs','perfect-calves']},
+      wed:{type:'lift', routineIds:['perfect-chest','perfect-triceps']},
+      thu:{type:'lift', routineIds:['perfect-legs','perfect-shoulders']},
       fri:{type:'cardio', note:'45-60 min run'},
       sat:{type:'rest'},
       sun:{type:'rest'}
     },
     routines:{
-      'perfect-chest':defaultRoutine('perfect-chest','Perfect Chest','AthleanX Perfect Chest (2025) — placeholder, fill from transcript',[
-        ['Incline DB Press',4,[8,12],'',''], ['Flat Barbell Bench',3,[6,10],'',''],
-        ['Weighted Dips',3,[8,10],'lean forward',''], ['Cable Fly',3,[12,15],'squeeze','isolation']]),
-      'perfect-triceps':defaultRoutine('perfect-triceps','Perfect Triceps','placeholder',[
-        ['Close-Grip Bench',3,[8,10],'',''], ['Overhead Rope Extension',3,[10,12],'','isolation'],
-        ['Rope Pushdown',3,[12,15],'','isolation']]),
-      'perfect-back':defaultRoutine('perfect-back','Perfect Back','placeholder',[
-        ['Pull-Ups',4,[6,12],'add weight if easy',''], ['Barbell Row',3,[8,10],'',''],
-        ['Lat Pulldown',3,[10,12],'',''], ['Seated Cable Row',3,[10,12],'',''], ['Face Pull',3,[15,20],'','isolation']]),
-      'perfect-biceps':defaultRoutine('perfect-biceps','Perfect Biceps','placeholder',[
-        ['Barbell Curl',3,[8,10],'',''], ['Incline DB Curl',3,[10,12],'','isolation'],
-        ['Hammer Curl',3,[10,12],'','isolation']]),
-      'perfect-shoulders':defaultRoutine('perfect-shoulders','Perfect Shoulders','placeholder',[
-        ['Overhead Press',4,[6,10],'',''], ['DB Lateral Raise',4,[12,15],'','isolation'],
-        ['Rear Delt Fly',3,[15,20],'','isolation'], ['Cable Lateral Raise',3,[12,15],'','isolation']]),
-      'perfect-abs':defaultRoutine('perfect-abs','Perfect Abs','placeholder',[
-        ['Hanging Leg Raise',3,[10,15],'','core'], ['Cable Crunch',3,[12,15],'','core'],
-        ['Plank',3,[45,60],'seconds','core']]),
-      'perfect-legs':defaultRoutine('perfect-legs','Perfect Legs','placeholder',[
-        ['Back Squat',4,[6,10],'',''], ['Romanian Deadlift',3,[8,10],'',''],
-        ['Leg Press',3,[10,12],'',''], ['Walking Lunge',3,[10,12],'each leg',''], ['Leg Curl',3,[12,15],'','isolation']]),
-      'perfect-calves':defaultRoutine('perfect-calves','Perfect Calves','placeholder',[
-        ['Standing Calf Raise',4,[12,15],'full stretch','isolation'], ['Seated Calf Raise',3,[15,20],'','isolation']])
+      'perfect-chest':defaultRoutine('perfect-chest','Perfect Chest','AthleanX Perfect Chest — Workout 1',[
+        ['Banded External Rotation',2,'10-15','PRIMER: sub-max, warm up the rotator cuff (do not fatigue it)','isolation'],
+        ['Incline DB Bench Press',3,'5-8','To failure. Thumbs up & forward at the top for extra adduction','compound'],
+        ['Cable Crossovers',3,'10-12 +partials','Lean back to load the chest; partials past failure','isolation'],
+        ['Floor Flys',3,'8-10 +eccentrics','At failure, floor-press up & control the eccentric to eccentric failure','isolation'],
+        ['Deficit 1.5-Rep Ladder Pushups',1,'AMRAP','1.5 reps; ascending bottom-stretch hold ladder (1s, 2s, 3s...)','compound'],
+        ['Dips',1,'AMRAP +partials','To failure, then partials past failure','compound']]),
+      'perfect-triceps':defaultRoutine('perfect-triceps','Perfect Triceps','AthleanX Perfect Triceps — Workout 1',[
+        ['Triceps Pushdowns',3,'6-8','To failure. Heavy but strict, do not jackhammer','compound'],
+        ['Lying DB Extensions',3,'8-10 +eccentrics','At failure, cheat up & control the eccentric behind the head to eccentric failure','isolation'],
+        ['DB/Cable Triceps Kickbacks',3,'10-12 +partials','Long-head focus, arm behind the body; partials past failure','isolation'],
+        ['Cobra Pushups',1,'AMRAP','Bodyweight burnout finisher','compound']]),
+      'perfect-back':defaultRoutine('perfect-back','Perfect Back','AthleanX Perfect Back — Workout 1',[
+        ['Scap Pulldown',2,'10-15','PRIMER: sub-max, warm up the scapula & shoulder girdle','isolation'],
+        ['Seated Cable Rows (elbows wide)',3,'5-8','To failure. Elbows wide, pull high for upper back & rear delts','compound'],
+        ['Lat Pulldowns (narrow grip)',3,'10-12 +partials','Narrow / triceps-bar grip to bias the lats; partials past failure','compound'],
+        ['Straight-Arm Pushdowns',3,'8-10 +eccentrics','At failure: row in, pushdown, control the eccentric to eccentric failure','isolation'],
+        ['1.5-Rep DB Pullover Ladder',1,'AMRAP','1.5 reps; ascending bottom-stretch hold ladder','isolation'],
+        ['Bodyweight/Banded Pullups',1,'AMRAP +partials','Bodyweight to failure, then band-assisted to failure, then partials','compound']]),
+      'perfect-biceps':defaultRoutine('perfect-biceps','Perfect Biceps','AthleanX Perfect Biceps — Workout 1',[
+        ['Barbell Strict-to-Cheat Curls',3,'6-8','Strict to failure, then cheat up with a controlled eccentric to eccentric failure (mechanical drop set)','compound'],
+        ['DB Cross-Body Hammer Curls',3,'8-10','Pronated grip to target the brachialis (arm width)','isolation'],
+        ['Cable Stretch Drag Curls',3,'10-12 +partials','Arms back behind the torso for long-head stretch; partials past failure','isolation'],
+        ['Mentzer Pulldowns',1,'AMRAP','Trap-set tempo: 1-1 escalating to 5-5, then back down to 1-1','compound']]),
+      'perfect-shoulders':defaultRoutine('perfect-shoulders','Perfect Shoulders','AthleanX Perfect Shoulders — Workout 1',[
+        ['DB Single-Arm OHP / Barbell OHP',3,'6-8','To failure. Single-arm DB if shoulder issues, else barbell to overload','compound'],
+        ['DB Lateral Raises (straight to bent)',4,'10-12 +partials','Mechanical drop: straight-arm to failure, bend the elbows, then partials','isolation'],
+        ['DB Rear Delt Rows',2,'10-12','Heavy; drive the elbow back behind the body. Lower volume (rear delts also hit on back day)','compound']]),
+      'perfect-abs':defaultRoutine('perfect-abs','Perfect Abs','Placeholder until a Perfect Abs transcript',[
+        ['Hanging Leg Raise',3,'10-15','','core'], ['Cable Crunch',3,'12-15','','core'],
+        ['Plank',3,'45-60s','','core']]),
+      'perfect-legs':defaultRoutine('perfect-legs','Perfect Legs','AthleanX Perfect Legs — Workout 1 (includes calves)',[
+        ['Reverse Hyper',2,'10-15','PRIMER: sub-max, warm up the low back & glutes','isolation'],
+        ['Deadlift / Trap-Bar Deadlift',3,'5 @ ~80%','NOT to failure. +5 lb next time if 3x5 completed; trap bar if low-back issues','compound'],
+        ['Barbell Front Squats',3,'6-8','Stay upright, drive tension into the quads; spares the low back','compound'],
+        ['Alternating DB Reverse Lunges',3,'10 each leg','Drop the DBs at failure (safe to push)','compound'],
+        ['Seated Ham Curls / Slick-Floor Bridge Curls',1,'12-15 then failure +eccentrics','Eccentric-only at failure: 2-down-1-up','isolation'],
+        ['Standing Calf Raises',3,'10-12 +partials','4s hold contracted + 4s hold stretched; stretch partials at failure','isolation']]),
+      'perfect-calves':defaultRoutine('perfect-calves','Perfect Calves','Optional add-on (calves are already in Perfect Legs)',[
+        ['Standing Calf Raise',4,'12-15 +partials','4s hold contracted + 4s hold stretched','isolation'],
+        ['Seated Calf Raise',3,'15-20','','isolation']])
     },
     days:{},
     favorites:[
@@ -338,9 +358,24 @@ function normalize(db){
 }
 function deepDefault(obj,def){ const o=Object.assign({},def,obj||{}); return o; }
 
+// Push updated bundled content (routines/split) to existing installs without touching logged data.
+const CONTENT_UPDATES = {
+  // v1 -> v2: real AthleanX Perfect Workout 1 exercises + the new 4-day split
+  1: db => { const f=seedDB(); db.routines=f.routines; db.split=f.split; db.settings.weeklyTargets=f.settings.weeklyTargets; return db; }
+};
+function applyContent(db){
+  // Must run on the RAW parsed db BEFORE normalize() (which would fill in the current
+  // contentVersion from seed defaults and mask that this is older content).
+  if(!db.settings) db.settings={};
+  let cv = db.settings.contentVersion || 1;
+  while(cv < CONTENT_VERSION){ db = CONTENT_UPDATES[cv](db); cv++; }
+  db.settings.contentVersion = CONTENT_VERSION;
+  return db;
+}
+
 function loadDB(){
   const raw = Cache.get(CACHE_KEY);
-  if(raw){ try{ return normalize(migrate(JSON.parse(raw))); }catch(e){ console.warn('cache parse failed',e); } }
+  if(raw){ try{ return normalize(applyContent(migrate(JSON.parse(raw)))); }catch(e){ console.warn('cache parse failed',e); } }
   return seedDB();
 }
 
@@ -646,7 +681,7 @@ function renderLift(){
         const fillW=sets.length?sets[sets.length-1].weight_lb:(lp?lp.sets[lp.sets.length-1].weight_lb:'');
         return `<div class="ex">
           <h3>${esc(ex.name)}</h3>
-          <div class="target">${ex.targetSets}×${ex.repRange[0]}-${ex.repRange[1]}${ex.type==='core'?' (sec/reps)':''}${ex.notes?' · '+esc(ex.notes):''}</div>
+          <div class="target">${ex.targetSets}×${esc(ex.reps||(ex.repRange?ex.repRange[0]+'-'+ex.repRange[1]:''))}${ex.type==='core'?' (sec/reps)':''}${ex.notes?' · '+esc(ex.notes):''}</div>
           ${lp?`<div class="last">Last (${esc(fmtDateShort(lp.date))}): ${esc(summarizeSets(lp.sets))}</div>`:'<div class="last faint" style="color:var(--faint)">No history yet</div>'}
           ${sets.map((st,i)=>`<div class="setrow"><span class="n">${i+1}</span>
             <input type="number" inputmode="numeric" value="${st.reps}" data-act="set-edit" data-ex="${ex.id}" data-i="${i}" data-k="reps"> <span class="unit">reps</span>
@@ -888,7 +923,7 @@ function renderMore(){
       ${Object.values(DB.routines).map(r=>`<details class="lib"><summary>${esc(r.name)} <span class="faint small">(${r.exercises.length})</span></summary>
         <div style="margin-top:10px">
           ${r.exercises.map(ex=>`<div class="row between" style="padding:6px 0;border-top:1px solid var(--line)">
-            <div class="small">${esc(ex.name)} <span class="muted">${ex.targetSets}×${ex.repRange[0]}-${ex.repRange[1]}</span></div>
+            <div class="small">${esc(ex.name)} <span class="muted">${ex.targetSets}×${esc(ex.reps||(ex.repRange?ex.repRange[0]+'-'+ex.repRange[1]:''))}</span></div>
             <button class="x small" data-act="ex-del" data-rid="${r.id}" data-id="${ex.id}">✕</button></div>`).join('')||'<div class="empty small">No exercises</div>'}
           <div class="row" style="gap:6px;margin-top:10px">
             <input id="exn-${r.id}" placeholder="Add exercise name">
@@ -985,7 +1020,7 @@ document.addEventListener('click', e=>{
     case 'split-type': { const d=el.dataset.day; const tp=el.dataset.type; DB.split[d]=DB.split[d]||{}; DB.split[d].type=tp; if(tp==='lift'&&!DB.split[d].routineIds)DB.split[d].routineIds=[]; touch(); renderMore(); break; }
     case 'split-routine': { const d=el.dataset.day; DB.split[d].routineIds=DB.split[d].routineIds||[]; const arr=DB.split[d].routineIds; const i=arr.indexOf(id); if(i>=0)arr.splice(i,1); else arr.push(id); touch(); renderMore(); break; }
     case 'split-run': { const d=el.dataset.day; DB.split[d]=DB.split[d]||{type:'lift'}; DB.split[d].run=!DB.split[d].run; touch(); renderMore(); break; }
-    case 'ex-add': { const rid=el.dataset.rid; const name=($('#exn-'+rid).value||'').trim(); if(!name)break; const sets=num($('#exs-'+rid).value,3); DB.routines[rid].exercises.push({id:slug(name)+'-'+uid().slice(-3),name,targetSets:sets,repRange:[8,12],notes:'',type:'compound'}); touch(); renderMore(); break; }
+    case 'ex-add': { const rid=el.dataset.rid; const name=($('#exn-'+rid).value||'').trim(); if(!name)break; const sets=num($('#exs-'+rid).value,3); DB.routines[rid].exercises.push({id:slug(name)+'-'+uid().slice(-3),name,targetSets:sets,reps:'8-12',notes:'',type:'compound'}); touch(); renderMore(); break; }
     case 'ex-del': { const rid=el.dataset.rid; DB.routines[rid].exercises=DB.routines[rid].exercises.filter(x=>x.id!==id); touch(); renderMore(); break; }
     case 'routine-new': { const name=($('#newRoutine').value||'').trim(); if(!name)break; const rid=slug(name)||'routine-'+uid().slice(-4); DB.routines[rid]={id:rid,name,source:'',exercises:[]}; touch(); renderMore(); toast('Added '+name); break; }
 
@@ -1031,7 +1066,7 @@ $('#fileInput').addEventListener('change', ev=>{
   reader.onload=()=>{ try{
       let parsed=JSON.parse(reader.result);
       if(!parsed || typeof parsed!=='object' || (!parsed.settings&&!parsed.days)) throw new Error('Not a workout-data file.');
-      parsed=normalize(migrate(parsed));
+      parsed=normalize(applyContent(migrate(parsed)));
       const cacheNewer = DB.meta.updatedAt > (parsed.meta.updatedAt||0) && Object.keys(DB.days).length;
       if(cacheNewer && !confirm('Your current on-device data looks newer than this file. Replace it with the file anyway?')) { ev.target.value=''; return; }
       DB=parsed; DB.meta.lastExportAt=Math.max(DB.meta.lastExportAt||0, DB.meta.updatedAt||0); flushSave(); applyTitle(); render(); toast('Loaded '+Object.keys(DB.days).length+' days');
