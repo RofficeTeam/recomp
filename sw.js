@@ -1,5 +1,5 @@
 /* 90-Day Recomp — offline service worker */
-const CACHE = 'recomp-v2';
+const CACHE = 'recomp-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.png'];
 
 self.addEventListener('install', e => {
